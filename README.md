@@ -2,21 +2,23 @@
 
 A [pi](https://github.com/badlogic/pi-mono) provider extension for [Xiaomi MiMo](https://platform.xiaomimimo.com) AI models.
 
-## Quick Start
+## Setup
+
+### Option A: `/login` (interactive)
 
 ```bash
-# 1. Set your API key
+pi -e path/to/pi-provider-xiaomi-mimo
+/login xiaomi-mimo
+```
+Paste your API key when prompted. It will be stored in `~/.pi/agent/auth.json`.
+
+### Option B: Environment variable
+
+```bash
 export MIMO_API_KEY=tp-xxxxx   # Token Plan
 # export MIMO_API_KEY=sk-xxxxx # pay-as-you-go
-
-# 2. Run pi with the extension
 pi -e path/to/pi-provider-xiaomi-mimo
-
-# 3. Select a model
-/model xiaomi-mimo/mimo-v2.5-pro
 ```
-
-Get an API key at [platform.xiaomimimo.com](https://platform.xiaomimimo.com/#/console/api-keys).
 
 ## Models
 
