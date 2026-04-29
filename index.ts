@@ -105,12 +105,12 @@ function resolveBaseUrl(): string {
 	if (process.env.MIMO_BASE_URL) return process.env.MIMO_BASE_URL;
 
 	const apiKey = process.env.MIMO_API_KEY ?? "";
-	if (apiKey.startsWith("tp-")) {
-		const cluster = process.env.MIMO_CLUSTER ?? DEFAULT_CLUSTER;
-		return TOKEN_PLAN_CLUSTERS[cluster] ?? TOKEN_PLAN_CLUSTERS[DEFAULT_CLUSTER];
+	if (apiKey.startsWith("sk-")) {
+		return PAYG_BASE_URL;
 	}
 
-	return PAYG_BASE_URL;
+	const cluster = process.env.MIMO_CLUSTER ?? DEFAULT_CLUSTER;
+	return TOKEN_PLAN_CLUSTERS[cluster] ?? TOKEN_PLAN_CLUSTERS[DEFAULT_CLUSTER];
 }
 
 // -- Registration -------------------------------------------------------------
