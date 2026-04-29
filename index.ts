@@ -10,10 +10,9 @@
  *   MIMO_API_KEY=tp-xxxxx pi -e path/to/pi-provider-xiaomi-mimo
  *   MIMO_API_KEY=sk-xxxxx pi -e path/to/pi-provider-xiaomi-mimo
  *
- * Then /model to select xiaomi-mimo/mimo-v2.5-pro
+ * Or use /login → "Use an API key" → xiaomi-mimo
  */
 
-import type { OAuthCredentials, OAuthLoginCallbacks } from "@mariozechner/pi-ai";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 // -- Base URLs ----------------------------------------------------------------
@@ -114,50 +113,16 @@ function resolveBaseUrl(): string {
 	return PAYG_BASE_URL;
 }
 
-// -- /login support ----------------------------------------------------------
-
-async function loginMimo(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-	const apiKey = await callbacks.onPrompt({
-		message: "Enter your MiMo API key (tp-xxxxx or sk-xxxxx):",
-		placeholder: "tp-...",
-	});
-	if (!apiKey) throw new Error("No API key provided");
-	return { refresh: apiKey, access: apiKey, expires: Date.now() + 365 * 24 * 60 * 60 * 1000 };
-}
-
 // -- Registration -------------------------------------------------------------
 
 export default function (pi: ExtensionAPI) {
-	const baseUrl = resolveBaseUrl();
-
-	// Resolve base URL at registration time so /login can override it.
-	// If the user logs in with a tp- key, switch to the Token Plan endpoint.
-	const getBaseUrlForCreds = (apiKey: string) => {
-		if (process.env.MIMO_BASE_URL) return process.env.MIMO_BASE_URL;
-		if (apiKey.startsWith("tp-")) {
-			const cluster = process.env.MIMO_CLUSTER ?? DEFAULT_CLUSTER;
-			return TOKEN_PLAN_CLUSTERS[cluster] ?? TOKEN_PLAN_CLUSTERS[DEFAULT_CLUSTER];
-		}
-		return PAYG_BASE_URL;
-	};
-
 	pi.registerProvider("xiaomi-mimo", {
-		baseUrl,
+		baseUrl: resolveBaseUrl(),
 		apiKey: "MIMO_API_KEY",
 		// MiMo's primary auth header is "api-key"; the OpenAI SDK also sends
 		// "Authorization: Bearer" automatically. Both methods work.
 		headers: { "api-key": "MIMO_API_KEY" },
 		api: "openai-completions",
 		models: MODELS,
-		oauth: {
-			name: "Xiaomi MiMo",
-			login: loginMimo,
-			refreshToken: async (creds) => creds, // API keys don't expire
-			getApiKey: (creds) => creds.access,
-			modifyModels: (models, creds) => {
-				const newBaseUrl = getBaseUrlForCreds(creds.access);
-				return models.map((m) => (m.provider === "xiaomi-mimo" ? { ...m, baseUrl: newBaseUrl } : m));
-			},
-		},
 	});
 }

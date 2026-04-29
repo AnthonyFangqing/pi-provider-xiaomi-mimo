@@ -6,11 +6,10 @@ A [pi](https://github.com/badlogic/pi-mono) provider extension for [Xiaomi MiMo]
 
 ### Option A: `/login` (interactive)
 
-```bash
-pi -e path/to/pi-provider-xiaomi-mimo
-/login xiaomi-mimo
 ```
-Paste your API key when prompted. It will be stored in `~/.pi/agent/auth.json`.
+/login
+```
+Select **"Use an API key"** → **xiaomi-mimo** → paste your key.
 
 ### Option B: Environment variable
 
