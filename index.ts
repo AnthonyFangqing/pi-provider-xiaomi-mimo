@@ -117,9 +117,8 @@ function resolveBaseUrl(): string {
 // -- /login support ----------------------------------------------------------
 
 async function loginMimo(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
-	callbacks.onAuth({ url: "https://platform.xiaomimimo.com/#/console/api-keys" });
 	const apiKey = await callbacks.onPrompt({
-		message: "Paste your MiMo API key (tp-xxxxx or sk-xxxxx):",
+		message: "Enter your MiMo API key (tp-xxxxx or sk-xxxxx):",
 		placeholder: "tp-...",
 	});
 	if (!apiKey) throw new Error("No API key provided");
