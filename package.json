@@ -1,0 +1,10 @@
+{
+  "name": "pi-provider-xiaomi-mimo",
+  "version": "1.0.0",
+  "description": "Pi provider extension for Xiaomi MiMo models (Token Plan & pay-as-you-go)",
+  "license": "MIT",
+  "type": "module",
+  "pi": {
+    "extensions": ["./index.ts"]
+  }
+}
