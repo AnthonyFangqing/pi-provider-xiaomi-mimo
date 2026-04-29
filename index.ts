@@ -8,7 +8,7 @@
  *
  * Usage:
  *   pi -e path/to/pi-provider-xiaomi-mimo
- *   /login → "Use a subscription" → xiaomi-mimo
+ *   /login → "Use a subscription" → Xiaomi MiMo
  *
  * Or set MIMO_API_KEY=tp-xxxxx (or sk-xxxxx) as an environment variable.
  */
@@ -129,9 +129,13 @@ export default function (pi: ExtensionAPI) {
 	pi.registerProvider("xiaomi-mimo", {
 		baseUrl: resolveBaseUrl(),
 		apiKey: "MIMO_API_KEY",
-		// MiMo's primary auth header is "api-key"; the OpenAI SDK also sends
-		// "Authorization: Bearer" automatically. Both methods work.
-		headers: { "api-key": "MIMO_API_KEY" },
+		// Use Authorization: Bearer header (set by authHeader: true).
+		// The OpenAI SDK also sends this automatically, but authHeader ensures
+		// it's set consistently regardless of how the key is resolved.
+		// Do NOT use a custom "api-key" header — pi resolves header values as
+		// env var names first, so if MIMO_API_KEY isn't in env (e.g. /login auth),
+		// the literal string "MIMO_API_KEY" would be sent as the header value.
+		authHeader: true,
 		api: "openai-completions",
 		models: MODELS,
 		oauth: {
