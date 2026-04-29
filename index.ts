@@ -7,12 +7,13 @@
  * Supports both Token Plan subscription and pay-as-you-go API access.
  *
  * Usage:
- *   MIMO_API_KEY=tp-xxxxx pi -e path/to/pi-provider-xiaomi-mimo
- *   MIMO_API_KEY=sk-xxxxx pi -e path/to/pi-provider-xiaomi-mimo
+ *   pi -e path/to/pi-provider-xiaomi-mimo
+ *   /login → "Use a subscription" → xiaomi-mimo
  *
- * Or use /login → "Use an API key" → xiaomi-mimo
+ * Or set MIMO_API_KEY=tp-xxxxx (or sk-xxxxx) as an environment variable.
  */
 
+import type { OAuthCredentials, OAuthLoginCallbacks } from "@mariozechner/pi-ai";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 // -- Base URLs ----------------------------------------------------------------
@@ -26,6 +27,18 @@ const TOKEN_PLAN_CLUSTERS: Record<string, string> = {
 };
 
 const DEFAULT_CLUSTER = "sgp";
+
+function baseUrlForKey(apiKey: string): string {
+	if (apiKey.startsWith("sk-")) return PAYG_BASE_URL;
+	const cluster = process.env.MIMO_CLUSTER ?? DEFAULT_CLUSTER;
+	return TOKEN_PLAN_CLUSTERS[cluster] ?? TOKEN_PLAN_CLUSTERS[DEFAULT_CLUSTER];
+}
+
+function resolveBaseUrl(): string {
+	if (process.env.MIMO_BASE_URL) return process.env.MIMO_BASE_URL;
+	const apiKey = process.env.MIMO_API_KEY ?? "";
+	return baseUrlForKey(apiKey || "tp-"); // default to Token Plan
+}
 
 // -- OpenAI-compat settings ---------------------------------------------------
 //
@@ -99,18 +112,15 @@ const MODELS = [
 	},
 ];
 
-// -- Base URL resolution ------------------------------------------------------
+// -- /login -------------------------------------------------------------------
 
-function resolveBaseUrl(): string {
-	if (process.env.MIMO_BASE_URL) return process.env.MIMO_BASE_URL;
-
-	const apiKey = process.env.MIMO_API_KEY ?? "";
-	if (apiKey.startsWith("sk-")) {
-		return PAYG_BASE_URL;
-	}
-
-	const cluster = process.env.MIMO_CLUSTER ?? DEFAULT_CLUSTER;
-	return TOKEN_PLAN_CLUSTERS[cluster] ?? TOKEN_PLAN_CLUSTERS[DEFAULT_CLUSTER];
+async function loginMimo(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials> {
+	const apiKey = await callbacks.onPrompt({
+		message: "Enter your MiMo API key (tp-xxxxx or sk-xxxxx):",
+		placeholder: "tp-...",
+	});
+	if (!apiKey) throw new Error("No API key provided");
+	return { refresh: apiKey, access: apiKey, expires: Date.now() + 365 * 24 * 60 * 60 * 1000 };
 }
 
 // -- Registration -------------------------------------------------------------
@@ -124,5 +134,17 @@ export default function (pi: ExtensionAPI) {
 		headers: { "api-key": "MIMO_API_KEY" },
 		api: "openai-completions",
 		models: MODELS,
+		oauth: {
+			name: "Xiaomi MiMo",
+			login: loginMimo,
+			refreshToken: async (creds) => creds,
+			getApiKey: (creds) => creds.access,
+			// After /login, swap baseUrl to match the key type.
+			// tp- keys → Token Plan cluster, sk- keys → pay-as-you-go.
+			modifyModels: (models, creds) =>
+				models.map((m) =>
+					m.provider === "xiaomi-mimo" ? { ...m, baseUrl: baseUrlForKey(creds.access) } : m,
+				),
+		},
 	});
 }

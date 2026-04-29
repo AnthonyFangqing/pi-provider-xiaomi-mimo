@@ -9,7 +9,11 @@ A [pi](https://github.com/badlogic/pi-mono) provider extension for [Xiaomi MiMo]
 ```
 /login
 ```
-Select **"Use an API key"** → **xiaomi-mimo** → paste your key.
+Select **"Use a subscription"** → **Xiaomi MiMo** → paste your key.
+
+> MiMo doesn't have a real OAuth flow — `/login` just stores your API key.
+> It appears under "subscription" because that's how pi supports dynamic base URL
+> switching (tp- keys → Token Plan endpoint, sk- keys → pay-as-you-go endpoint).
 
 ### Option B: Environment variable
 
